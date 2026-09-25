@@ -1,0 +1,6 @@
+Full Name,Batch,Branch,Roll Number,Email,Company,Job Role
+Rahul Sharma,2022,CSE,CSE-2018-042,duplicate.rahul@example.com,Google,Duplicate Record
+Ananya Gupta,2022,CSE,CSE-2018-011,duplicate.ananya@example.com,Amazon,Duplicate Record
+New Student Unique,2024,CSE,CSE-2020-999,unique.student@example.com,Atlassian,Frontend Developer
+Same Batch Dup 1,2023,IT,IT-2019-888,dup1@example.com,Infosys,Associate
+Same Batch Dup 2,2023,IT,IT-2019-888,dup2@example.com,Wipro,Associate

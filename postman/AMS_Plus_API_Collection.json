@@ -1,0 +1,214 @@
+{
+  "info": {
+    "name": "AMS+ — Alumni Management & AI Engagement System",
+    "description": "Comprehensive REST API Collection for AMS+ v2.0 covering Authentication, Bulk Import, AI Discovery, Council Verification, Mentorship, Doubts, Chatbot, Analytics, and Auditing.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "aiBaseUrl", "value": "http://localhost:8000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Test Candidate\",\n  \"email\": \"candidate@example.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"STUDENT\",\n  \"department\": \"Computer Science & Engineering\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/verify-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"candidate@example.com\",\n  \"otp\": \"123456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Login (Council Persona)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"council@example.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Get Current Profile (/auth/me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alumni Data & Bulk Import",
+      "item": [
+        {
+          "name": "Upload CSV for Preview",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/alumni-records/upload"
+          }
+        },
+        {
+          "name": "Execute Bulk Import",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/alumni-records/import",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rows\": [\n    {\n      \"fullName\": \"Dev Test\",\n      \"rollNumber\": \"TEST-999\",\n      \"graduationYear\": 2023,\n      \"branch\": \"CSE\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Get Unregistered Alumni",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/alumni-records/unregistered"
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Discovery & Verification",
+      "item": [
+        {
+          "name": "Trigger AI Discovery",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/discovery/run",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recordId\": \"record-uuid\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Verify Match (Council Action)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/matches/:id/verify"
+          }
+        },
+        {
+          "name": "Reject Match with Reason",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/matches/:id/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectionReason\": \"Identical name from an unrelated university\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Student Doubts & AI Recommendations",
+      "item": [
+        {
+          "name": "Post Doubt Question",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/doubts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"How to crack System Design interviews?\",\n  \"description\": \"Targeting senior backend roles. What key patterns are essential?\",\n  \"category\": \"Interview Preparation\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Post Answer (Alumni)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/doubts/:id/answers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Focus on caching strategies, SQL vs NoSQL trade-offs, and horizontal scalability.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        },
+        {
+          "name": "Mark Helpful Answer",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/doubts/:id/answers/:answerId/helpful"
+          }
+        }
+      ]
+    },
+    {
+      "name": "AI Chatbot NLP",
+      "item": [
+        {
+          "name": "Query Chatbot",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/chatbot/query",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Find alumni working in Google\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics & PDF Export",
+      "item": [
+        {
+          "name": "Get Summary Analytics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/analytics/summary"
+          }
+        },
+        {
+          "name": "Download PDF Report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/analytics/export-pdf"
+          }
+        }
+      ]
+    }
+  ]
+}

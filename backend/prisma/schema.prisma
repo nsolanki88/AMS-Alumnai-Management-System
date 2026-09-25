@@ -1,0 +1,320 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String    @id @default(uuid())
+  fullName             String
+  email                String    @unique
+  passwordHash         String
+  phoneNumber          String?
+  role                 String    @default("STUDENT") // STUDENT, ALUMNI, FACULTY, COUNCIL, ADMIN
+  isVerified           Boolean   @default(false)
+  failedLoginAttempts  Int       @default(0)
+  lockedUntil          DateTime?
+  department           String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  alumniProfile        AlumniProfile?
+  mentorshipProfile    MentorshipProfile?
+  posts                GroupPost[]
+  comments             PostComment[]
+  reactions            PostReaction[]
+  doubtQuestions       DoubtQuestion[]
+  doubtAnswers         DoubtAnswer[]
+  sentInvitations      WorkshopInvitation[] @relation("SentInvitations")
+  receivedInvitations  WorkshopInvitation[] @relation("ReceivedInvitations")
+  givenEndorsements    FacultyEndorsement[] @relation("FacultyEndorsements")
+  receivedEndorsements FacultyEndorsement[] @relation("AlumniEndorsements")
+  sentReferrals        ReferralConnection[] @relation("AlumniReferrals")
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+  refreshTokens        RefreshToken[]
+  chatbotLogs          ChatbotLog[]
+  outreachLogs         OutreachLog[]
+}
+
+model AlumniProfile {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  graduationYear       Int
+  branch               String
+  rollNumber           String?
+  currentCompany       String?
+  currentRole          String?
+  cityCountry          String?
+  bio                  String?
+  linkedinUrl          String?
+  githubUrl            String?
+  visibility           String    @default("PUBLIC") // PUBLIC, BATCH_ONLY, PRIVATE
+  isMentor             Boolean   @default(false)
+  workshopReady        Boolean   @default(false)
+  skills               String    @default("[]") // JSON stringified array of skills
+  experienceYears      Int       @default(0)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model AlumniRecord {
+  recordId             String    @id @default(uuid())
+  source               String    @default("MANUAL_IMPORT")
+  fullName             String
+  graduationYear       Int
+  branch               String
+  rollNumber           String    @unique
+  contactEmail         String?
+  phoneNumber          String?
+  cityCountry          String?
+  company              String?
+  jobRole              String?
+  registrationStatus   String    @default("unregistered") // unregistered, registered, verified
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  potentialMatches     PotentialMatch[]
+  outreachLogs         OutreachLog[]
+}
+
+model PotentialMatch {
+  id                   String       @id @default(uuid())
+  recordId             String
+  record               AlumniRecord @relation(fields: [recordId], references: [recordId], onDelete: Cascade)
+  name                 String
+  platform             String       @default("LinkedIn Public")
+  profileUrl           String
+  confidenceScore      Int
+  reasons              String       @default("[]") // JSON stringified reasons
+  matchingAttributes   String       @default("{}") // JSON stringified key-values
+  status               String       @default("pending") // pending, verified, rejected, uncertain
+  rejectionReason      String?
+  reviewedBy           String?
+  reviewedAt           DateTime?
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+}
+
+model OutreachLog {
+  id                   String       @id @default(uuid())
+  recordId             String
+  record               AlumniRecord @relation(fields: [recordId], references: [recordId], onDelete: Cascade)
+  channel              String       // email, phone, message
+  status               String       // contacted, no_response, responded, opted_out
+  notes                String?
+  loggedBy             String
+  logger               User?        @relation(fields: [loggedBy], references: [id])
+  followUpDate         DateTime?
+  createdAt            DateTime     @default(now())
+}
+
+model BatchGroup {
+  id                   String      @id @default(uuid())
+  graduationYear       Int         @unique
+  name                 String
+  description          String?
+  createdAt            DateTime    @default(now())
+  posts                GroupPost[]
+}
+
+model GroupPost {
+  id                   String        @id @default(uuid())
+  groupId              String
+  group                BatchGroup    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  authorId             String
+  author               User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title                String
+  content              String
+  postType             String        @default("discussion") // announcement, discussion, event, workshop, job
+  attachments          String?       // JSON stringified array of URLs
+  isModerated          Boolean       @default(false)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  comments             PostComment[]
+  reactions            PostReaction[]
+}
+
+model PostComment {
+  id                   String      @id @default(uuid())
+  postId               String
+  post                 GroupPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId             String
+  author               User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content              String
+  createdAt            DateTime    @default(now())
+}
+
+model PostReaction {
+  id                   String      @id @default(uuid())
+  postId               String
+  post                 GroupPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId               String
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactionType         String      @default("like") // like, celebrate, insightful, love
+  createdAt            DateTime    @default(now())
+
+  @@unique([postId, userId])
+}
+
+model ReferralConnection {
+  id                   String      @id @default(uuid())
+  referrerAlumniId     String
+  referrer             User        @relation("AlumniReferrals", fields: [referrerAlumniId], references: [id], onDelete: Cascade)
+  referredName         String
+  referredEmail        String
+  graduationYear       Int
+  branch               String
+  company              String?
+  jobRole              String?
+  linkedinUrl          String?
+  status               String      @default("pending") // pending, verified, rejected
+  notes                String?
+  reviewedBy           String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+}
+
+model MentorshipProfile {
+  id                     String    @id @default(uuid())
+  userId                 String    @unique
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio                    String?
+  currentCompany         String?
+  currentRole            String?
+  yearsOfExperience      Int       @default(0)
+  skills                 String    @default("[]") // JSON string
+  expertiseAreas         String    @default("[]") // JSON string
+  workshopTopics         String    @default("[]") // JSON string
+  mentorshipAvailability String    @default("available") // available, limited, unavailable
+  isActive               Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+}
+
+model WorkshopInvitation {
+  id                   String      @id @default(uuid())
+  requesterId          String
+  requester            User        @relation("SentInvitations", fields: [requesterId], references: [id], onDelete: Cascade)
+  alumniId             String
+  alumnus              User        @relation("ReceivedInvitations", fields: [alumniId], references: [id], onDelete: Cascade)
+  topic                String
+  sessionType          String      @default("workshop") // workshop, guest_lecture, technical_talk, curriculum_feedback
+  date                 DateTime
+  time                 String?
+  status               String      @default("pending") // pending, accepted, declined, rescheduled
+  notes                String?
+  meetingLink          String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+}
+
+model DoubtQuestion {
+  id                   String        @id @default(uuid())
+  studentId            String
+  student              User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title                String
+  description          String
+  category             String        // Interview Preparation, Higher Studies, Career Switch, Technical, Career Guidance, Other
+  aiClassifiedCategory String?
+  extractedSkills      String        @default("[]") // JSON stringified array
+  status               String        @default("open") // open, answered, closed
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  answers              DoubtAnswer[]
+}
+
+model DoubtAnswer {
+  id                   String        @id @default(uuid())
+  doubtId              String
+  doubt                DoubtQuestion @relation(fields: [doubtId], references: [id], onDelete: Cascade)
+  alumniId             String
+  alumnus              User          @relation(fields: [alumniId], references: [id], onDelete: Cascade)
+  content              String
+  isHelpful            Boolean       @default(false)
+  createdAt            DateTime      @default(now())
+}
+
+model FacultyEndorsement {
+  id                   String      @id @default(uuid())
+  facultyId            String
+  faculty              User        @relation("FacultyEndorsements", fields: [facultyId], references: [id], onDelete: Cascade)
+  alumniId             String
+  alumnus              User        @relation("AlumniEndorsements", fields: [alumniId], references: [id], onDelete: Cascade)
+  skillName            String
+  comment              String?
+  createdAt            DateTime    @default(now())
+
+  @@unique([facultyId, alumniId, skillName])
+}
+
+model AuditLog {
+  auditId              String      @id @default(uuid())
+  userId               String?
+  user                 User?       @relation(fields: [userId], references: [id])
+  actionType           String      // ALUMNI_IMPORT, AI_DISCOVERY_STARTED, MATCH_VERIFIED, etc.
+  entityType           String      // ALUMNI_RECORD, POTENTIAL_MATCH, POST, USER, REFERRAL
+  entityId             String?
+  metadata             String?     // JSON string
+  ipAddress            String?
+  timestamp            DateTime    @default(now())
+}
+
+model Notification {
+  id                   String      @id @default(uuid())
+  userId               String
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title                String
+  message              String
+  type                 String      @default("info") // info, match, verification, mentorship, doubt, referral
+  isRead               Boolean     @default(false)
+  metadata             String?     // JSON string
+  createdAt            DateTime    @default(now())
+}
+
+model OtpVerification {
+  id                   String      @id @default(uuid())
+  email                String
+  otp                  String
+  expiresAt            DateTime
+  isUsed               Boolean     @default(false)
+  createdAt            DateTime    @default(now())
+}
+
+model PasswordReset {
+  id                   String      @id @default(uuid())
+  email                String
+  token                String      @unique
+  expiresAt            DateTime
+  isUsed               Boolean     @default(false)
+  createdAt            DateTime    @default(now())
+}
+
+model RefreshToken {
+  id                   String      @id @default(uuid())
+  userId               String
+  user                 User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token                String      @unique
+  expiresAt            DateTime
+  isRevoked            Boolean     @default(false)
+  createdAt            DateTime    @default(now())
+}
+
+model ChatbotLog {
+  id                   String      @id @default(uuid())
+  userId               String?
+  user                 User?       @relation(fields: [userId], references: [id])
+  userRole             String      @default("STUDENT")
+  query                String
+  intent               String?
+  confidence           Float?
+  entities             String?     // JSON string
+  wasAnswered          Boolean     @default(true)
+  timestamp            DateTime    @default(now())
+}

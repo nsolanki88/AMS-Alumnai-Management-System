@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+*/node_modules/
+.npm-cache/
+*/.npm-cache/
+venv/
+*/venv/
+.venv/
+*/.venv/
+
+# Python
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*/.pytest_cache/
+
+# Production Builds
+dist/
+*/dist/
+build/
+*/build/
+
+# Environment Variables
+.env
+*.env
+!.env.example
+!*/.env.example
+
+# SQLite Database & Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# OS Files
+.DS_Store
+*/.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/

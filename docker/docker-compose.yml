@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ams-plus-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ams_user
+      POSTGRES_PASSWORD: ams_password_2026
+      POSTGRES_DB: ams_plus
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ../docker/backend.Dockerfile
+    container_name: ams-plus-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DATABASE_URL: "file:./dev.db"
+      JWT_SECRET: super_secret_jwt_ams_plus_key_2026_production
+      JWT_REFRESH_SECRET: super_secret_refresh_ams_plus_key_2026_production
+      AI_SERVICE_URL: http://ai-service:8000
+      FRONTEND_URL: http://localhost:5173
+    depends_on:
+      - postgres
+
+  ai-service:
+    build:
+      context: ../ai-service
+      dockerfile: ../docker/ai-service.Dockerfile
+    container_name: ams-plus-ai
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: 8000
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../docker/frontend.Dockerfile
+    container_name: ams-plus-frontend
+    restart: always
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
